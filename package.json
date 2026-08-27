@@ -12,6 +12,7 @@
     "check": "npm run typecheck && npm run lint && npm run test",
     "verify:provider": "node --env-file=.env.local scripts/verify-provider.mjs",
     "verify:db": "node --env-file=.env.local scripts/verify-db.mjs",
+    "verify:rag": "node --conditions=react-server --env-file=.env.local --import tsx scripts/verify-rag.mts",
     "db:generate": "node --env-file-if-exists=.env.local ./node_modules/drizzle-kit/bin.cjs generate",
     "db:migrate": "node --env-file=.env.local ./node_modules/drizzle-kit/bin.cjs migrate",
     "db:push": "node --env-file=.env.local ./node_modules/drizzle-kit/bin.cjs push",
