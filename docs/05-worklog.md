@@ -10,14 +10,14 @@ sections of the final README.
 |---|---|---|---|
 | Planning + stack verification | — | 0:20 | docs/ folder; version, platform-limit and free-tier checks |
 | Implementation spec | — | 0:15 | docs/06 + 07, after review that the plan was not yet buildable |
-| 0 — Skeleton and deploy path | 0:30 | 0:50 | Scaffold, deps, health route, provider verification. **Deploy still pending.** |
-| 1 — Schema and data layer | 0:45 | 0:35 | ✅ **Gate 1 passed** — schema live in Neon, all index types verified |
-| 2 — Ingestion pipeline | 1:00 | 0:45 (partial) | parse/chunk/embed + 18 tests + PDF fixture. Routes pending. |
-| 3 — Chat, retrieval, persistence | 1:00 | | |
-| 4 — Citations and evidence cards | 0:45 | | |
-| 5 — States and hardening | 0:30 | | |
+| 0 — Skeleton and deploy path | 0:30 | 0:50 | Scaffold, deps, health route, provider verification |
+| 1 — Schema and data layer | 0:45 | 0:35 | ✅ **Gate 1 passed** — schema live in Neon, index types verified |
+| 2 — Ingestion pipeline | 1:00 | 1:05 | parse/chunk/embed, routes, 18 tests, PDF fixture |
+| 3 — Chat, retrieval, persistence | 1:00 | 0:50 | Hybrid RRF retrieval, grounded prompt, chat route, UI |
+| 4 — Citations and evidence cards | 0:45 | 0:40 | Chips, cards, `data-sources` part, 13 more tests |
+| 5 — States and hardening | 0:30 | 0:15 (partial) | States built; full QA blocked on the provider |
 | 6 — README and submission | 0:30 | | |
-| **Total** | **5:00** | **2:45 so far** | |
+| **Total** | **5:00** | **4:50 so far** | |
 
 ### Deviation from the plan (Phase 0 → 1 overlap)
 
@@ -33,36 +33,61 @@ decisions" axis is looking for.
 
 | Gate | Status |
 |---|---|
-| **0** — deployed URL returns healthy from Neon | ⬜ **Open.** Local half done; Vercel project not yet created |
-| **1** — schema live, index types correct | ✅ **Passed** |
-| 2 — real PDF ingests on Vercel with correct pages | ⬜ Not started |
-| 3 — ask → stream → reload → conversation intact | ⬜ Not started |
-| 4 — citations resolve to real rows, survive reload | ⬜ Not started |
-| 5 — all 15 QA rows pass on the deployed URL | ⬜ Not started |
-| 6 — a stranger can clone and run from the README | ⬜ Not started |
+| **0** — deployed URL returns healthy from Neon | 🟡 **Local half passed** (`{"ok":true,"db":1,"pgvector":true}`); Vercel deploy pending |
+| **1** — schema live, index types correct | ✅ Passed |
+| **2** — real PDF ingests with correct pages | 🟡 Parse + chunk verified in the live runtime and by tests; embedding blocked (see below) |
+| **3** — ask → stream → reload → conversation intact | ⬜ Blocked on the provider |
+| **4** — citations resolve to real rows, survive reload | 🟡 Logic tested (13 tests); live render blocked |
+| **5** — all 15 QA rows pass on the deployed URL | ⬜ Blocked |
+| **6** — a stranger can clone and run from the README | ⬜ Not started |
+
+### 🔴 Current blocker: Gemini API geo restriction (environment, not code)
+
+```
+egress: GB / AS16276 OVH SAS   (VPN or proxy exit in a datacenter)
+HTTP 400 FAILED_PRECONDITION — "User location is not supported for the API use."
+```
+
+Both chat and embedding calls passed earlier in the session and now fail, with no code change
+in between: the connection began leaving through a datacenter VPN exit that Google refuses.
+
+**Everything that does not call Google still works locally**, which is most of the pipeline:
+PDF parsing, chunking, all four database tables, retrieval SQL, every route's validation and
+error path, and all 31 tests.
+
+**Expected to be unaffected in production.** Vercel functions run from AWS US East, a
+supported location. To be confirmed at deploy — it is an assumption until then.
+
+**To unblock local work:** switch the VPN to a US exit, or disable it.
 
 ## State at last update
 
-**Verified working**
-- Next.js 16.3.3 · React 19.2.8 · Tailwind 4 · TypeScript `strict` + `noUncheckedIndexedAccess`
-- `ai@7.0.83`, `@ai-sdk/react@4.0.86`, `@ai-sdk/google@4.0.56`, `drizzle-orm@0.45.2`,
-  `drizzle-kit@0.31.10`, `@neondatabase/serverless@1.1.0`, `unpdf@1.8.1`, `zod@4.4.3`
-- **Neon schema live**: pgvector 0.8.6, 4 tables, `chunks_embedding_idx` confirmed **hnsw**,
-  `chunks_tsv_idx` confirmed **gin**, `content_tsv` confirmed generated-STORED,
-  `vector(1536)` confirmed, JSONB round-trip and `ON DELETE CASCADE` both confirmed
-- **Provider verified**: `gemini-3.6-flash` responds; embeddings at 1536 dims; raw L2 norm
-  0.6918 → normalisation is genuinely required; paraphrase 0.7497 vs unrelated 0.5355
-- `npm run check` (typecheck + lint) clean
+**Verified working, live**
+- `GET /api/health` → `{"ok":true,"db":1,"pgvector":true,"latencyMs":1821}`
+  (that latency is the Neon free-plan cold start — the reason skeletons exist)
+- `/` renders with its empty state; `/chat/<unknown-uuid>` correctly 404s
+- `POST /api/documents` error paths, all with correct status codes and human-readable messages:
+  `.docx` → 415 `UNSUPPORTED_TYPE`, empty file → 422 `EMPTY_DOCUMENT`,
+  unknown chat → 404 `CHAT_NOT_FOUND`, provider down → 502 `EMBEDDING_FAILED`
+- A failed ingest persists `status='failed'` **and its reason** on the document row, with
+  zero partial chunks written — so the explanation survives a reload
+- `unpdf` parses correctly inside the Next.js runtime (parse and chunk both completed before
+  the embedding call failed), which retires the biggest Phase 2 risk
+- `npm run build` succeeds; 31/31 tests, typecheck and lint all clean
 
-**Written, not yet exercised**
-- `lib/db/schema.ts`, `lib/db/queries.ts`, `lib/db/index.ts`, `lib/rag/types.ts`,
-  `lib/ai/models.ts`
-- `app/api/health/route.ts` — passes locally; not yet hit on Vercel
+**Written, not yet exercised end to end**
+- Streaming answers, inline citation chips, evidence cards — all blocked behind the provider
 
 **Next**
-- Create the Vercel project, set env vars, deploy → closes **Gate 0**
-- Pin function region to `cle1` (Ohio) to co-locate with Neon's us-east-2
-- Phase 2: ingestion pipeline
+- Deploy to Vercel → closes Gate 0, and very likely unblocks the provider
+- Pin the function region to `cle1` (Ohio) to co-locate with Neon's us-east-2
+- Run the full QA script (docs/06 §13) against the deployed URL
+
+### Environment note
+
+Port 3000 was already in use by an unrelated project on this machine, so `next dev` moved to
+**3001**. Worth recording because the first health check hit the *other* app and returned a
+404 that looked like ours was broken.
 
 ## AI tools used
 
