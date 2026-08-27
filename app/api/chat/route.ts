@@ -12,11 +12,12 @@ import {
 import { z } from 'zod';
 
 import { CHAT_MODEL } from '@/lib/ai/models';
+import type { ChatMessage } from '@/lib/chat-types';
 import { getChat, listDocuments, saveMessages, setChatTitleIfEmpty } from '@/lib/db/queries';
 import { AppError, errorResponse } from '@/lib/errors';
 import { buildNoResultsReply, buildSystemPrompt } from '@/lib/rag/prompt';
 import { retrieve } from '@/lib/rag/retrieve';
-import { buildTools } from '@/lib/rag/tools';
+import { buildSources, buildTools } from '@/lib/rag/tools';
 
 export const maxDuration = 60;
 
@@ -86,21 +87,28 @@ export async function POST(request: Request) {
     }
 
     const tools = buildTools(retrieved);
-
-    const result = streamText({
-      model: google(CHAT_MODEL),
-      system: buildSystemPrompt(retrieved),
-      messages: await convertToModelMessages(messages),
-      tools,
-      // Allows: call showEvidence -> receive its result -> write the final cited answer.
-      stopWhen: stepCountIs(3),
-    });
+    const sources = buildSources(retrieved);
+    const modelMessages = await convertToModelMessages(messages);
 
     return createUIMessageStreamResponse({
-      stream: toUIMessageStream({
-        stream: result.stream,
-        tools,
-        originalMessages: messages,
+      stream: createUIMessageStream<ChatMessage>({
+        originalMessages: messages as ChatMessage[],
+        execute: ({ writer }) => {
+          // Emit the retrieval set first, so the client can resolve inline [n] markers as
+          // soon as the first token arrives rather than waiting for the answer to finish.
+          writer.write({ type: 'data-sources', id: 'sources', data: sources });
+
+          const result = streamText({
+            model: google(CHAT_MODEL),
+            system: buildSystemPrompt(retrieved),
+            messages: modelMessages,
+            tools,
+            // Allows: call showEvidence -> receive its result -> write the final cited answer.
+            stopWhen: stepCountIs(3),
+          });
+
+          writer.merge(toUIMessageStream({ stream: result.stream, tools }));
+        },
         // Persistence happens on the server. Doing it client-side would lose the reply
         // whenever a stream is interrupted or the tab closes mid-answer — quietly breaking
         // "the conversation survives a reload". See docs/04-decisions.md D5.

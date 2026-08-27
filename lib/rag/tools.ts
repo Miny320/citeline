@@ -49,6 +49,20 @@ export function resolveCitations(indexes: number[], retrieved: RetrievedChunk[])
 }
 
 /**
+ * The full retrieval set as citations, in context-block order.
+ *
+ * Streamed to the client as a data part so an inline `[2]` in the answer can be resolved to
+ * its filename, locator and verbatim excerpt — including after a reload, since data parts are
+ * persisted with the message.
+ */
+export function buildSources(retrieved: RetrievedChunk[]): Citation[] {
+  return resolveCitations(
+    retrieved.map((_, index) => index + 1),
+    retrieved,
+  );
+}
+
+/**
  * Tools for one chat request.
  *
  * Built per-request as a closure over that request's retrieval set, which is what keeps
