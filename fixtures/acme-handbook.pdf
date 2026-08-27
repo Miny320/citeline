@@ -1,0 +1,148 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [4 0 R 6 0 R 8 0 R 10 0 R 12 0 R] /Count 5 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+4 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 5 0 R /Resources << /Font << /F1 3 0 R >> >> >>
+endobj
+5 0 obj
+<< /Length 393 >>
+stream
+BT
+/F1 11 Tf
+16 TL
+72 720 Td
+(ACME CORP CUSTOMER HANDBOOK) Tj
+T* () Tj
+T* (Revision 7, published March 2026.) Tj
+T* () Tj
+T* (This handbook describes billing, support and onboarding) Tj
+T* (policies for all Acme Corp customer tiers. It supersedes) Tj
+T* (all previous revisions.) Tj
+T* () Tj
+T* (Questions about this document should be directed to the) Tj
+T* (Customer Operations team.) Tj
+ET
+endstream
+endobj
+6 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 7 0 R /Resources << /Font << /F1 3 0 R >> >> >>
+endobj
+7 0 obj
+<< /Length 513 >>
+stream
+BT
+/F1 11 Tf
+16 TL
+72 720 Td
+(SECTION 1: REFUNDS AND BILLING) Tj
+T* () Tj
+T* (Standard customers may request a refund within 14 days) Tj
+T* (of purchase. Refunds are issued to the original payment) Tj
+T* (method and take 5 to 7 business days to appear.) Tj
+T* () Tj
+T* (Enterprise customers may request a full refund within 45) Tj
+T* (days of the invoice date. Enterprise refunds require) Tj
+T* (written approval from an account director.) Tj
+T* () Tj
+T* (Partial refunds are not offered for annual plans.) Tj
+ET
+endstream
+endobj
+8 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 9 0 R /Resources << /Font << /F1 3 0 R >> >> >>
+endobj
+9 0 obj
+<< /Length 462 >>
+stream
+BT
+/F1 11 Tf
+16 TL
+72 720 Td
+(SECTION 2: SUPPORT COMMITMENTS) Tj
+T* () Tj
+T* (Standard customers receive email support with a response) Tj
+T* (target of one business day.) Tj
+T* () Tj
+T* (Enterprise customers receive priority support with a) Tj
+T* (2-hour response SLA during business hours, and a 4-hour) Tj
+T* (response SLA outside them.) Tj
+T* () Tj
+T* (The support portal is available at all times except) Tj
+T* (during scheduled maintenance windows.) Tj
+ET
+endstream
+endobj
+10 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 11 0 R /Resources << /Font << /F1 3 0 R >> >> >>
+endobj
+11 0 obj
+<< /Length 422 >>
+stream
+BT
+/F1 11 Tf
+16 TL
+72 720 Td
+(SECTION 3: ONBOARDING) Tj
+T* () Tj
+T* (The onboarding process for enterprise accounts takes) Tj
+T* (approximately three weeks from contract signature.) Tj
+T* () Tj
+T* (Onboarding includes data migration, single sign-on) Tj
+T* (configuration, and two training sessions for up to) Tj
+T* (twenty five named users.) Tj
+T* () Tj
+T* (Standard accounts are self-serve and activate instantly.) Tj
+ET
+endstream
+endobj
+12 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 13 0 R /Resources << /Font << /F1 3 0 R >> >> >>
+endobj
+13 0 obj
+<< /Length 459 >>
+stream
+BT
+/F1 11 Tf
+16 TL
+72 720 Td
+(APPENDIX A: ERROR CODES) Tj
+T* () Tj
+T* (ERR_2043 indicates that the uploaded file exceeded the) Tj
+T* (maximum permitted size. Reduce the file size and retry.) Tj
+T* () Tj
+T* (ERR_3011 indicates an expired authentication token.) Tj
+T* (Sign out and sign back in to obtain a new token.) Tj
+T* () Tj
+T* (ERR_5502 indicates a temporary upstream outage. These) Tj
+T* (resolve without customer action, usually within minutes.) Tj
+ET
+endstream
+endobj
+xref
+0 14
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000141 00000 n 
+0000000238 00000 n 
+0000000364 00000 n 
+0000000807 00000 n 
+0000000933 00000 n 
+0000001496 00000 n 
+0000001622 00000 n 
+0000002134 00000 n 
+0000002262 00000 n 
+0000002735 00000 n 
+0000002863 00000 n 
+trailer
+<< /Size 14 /Root 1 0 R >>
+startxref
+3373
+%%EOF
