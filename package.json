@@ -1,26 +1,46 @@
 {
-  "name": "doc-chat",
+  "name": "citeline",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test \"tests/**/*.test.ts\"",
+    "check": "npm run typecheck && npm run lint && npm run test",
+    "verify:provider": "node --env-file=.env.local scripts/verify-provider.mjs",
+    "verify:db": "node --env-file=.env.local scripts/verify-db.mjs",
+    "db:generate": "node --env-file-if-exists=.env.local ./node_modules/drizzle-kit/bin.cjs generate",
+    "db:migrate": "node --env-file=.env.local ./node_modules/drizzle-kit/bin.cjs migrate",
+    "db:push": "node --env-file=.env.local ./node_modules/drizzle-kit/bin.cjs push",
+    "db:studio": "node --env-file=.env.local ./node_modules/drizzle-kit/bin.cjs studio",
+    "fixtures": "node scripts/make-sample-pdf.mjs"
   },
   "dependencies": {
+    "@ai-sdk/google": "^4.0.56",
+    "@ai-sdk/react": "^4.0.86",
+    "@neondatabase/serverless": "^1.1.0",
+    "ai": "^7.0.83",
+    "drizzle-orm": "^0.45.2",
     "next": "16.3.3",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "server-only": "^0.0.1",
+    "unpdf": "^1.8.1",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "drizzle-kit": "^0.31.10",
     "eslint": "^9",
     "eslint-config-next": "16.3.3",
     "tailwindcss": "^4",
+    "tsx": "^4.23.12",
     "typescript": "^5"
   }
 }
