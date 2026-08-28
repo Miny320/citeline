@@ -6,7 +6,7 @@ Upload a PDF, TXT or Markdown file inside the conversation, ask questions about 
 streamed answers grounded in the document. Every factual claim carries a citation showing the
 filename, the page or section, and the verbatim excerpt it came from.
 
-**Live URL:** _pending deployment_
+**Live URL:** https://citeline-henna.vercel.app
 **Repository:** https://github.com/Miny320/citeline
 
 Planning and design documents live in [`docs/`](docs/) — requirements, architecture, the full
@@ -282,7 +282,7 @@ Model ids were chosen by measurement, not assumption ([`lib/ai/models.ts`](lib/a
 
 ## Time spent
 
-**Roughly 5 hours**, tracked live in [`docs/05-worklog.md`](docs/05-worklog.md).
+**About 5 hours 40 minutes** — over the box by roughly forty minutes, reported as measured rather than as budgeted. Tracked live in [`docs/05-worklog.md`](docs/05-worklog.md).
 
 | Phase | Budget | Actual |
 |---|---|---|
@@ -293,7 +293,7 @@ Model ids were chosen by measurement, not assumption ([`lib/ai/models.ts`](lib/a
 | 2 — Ingestion pipeline | 1:00 | 1:05 |
 | 3 — Chat, retrieval, persistence | 1:00 | 0:50 |
 | 4 — Citations and evidence cards | 0:45 | 0:40 |
-| 5 — States and hardening | 0:30 | 0:15 |
+| 5 — States, hardening, deploy, QA | 0:30 | 0:40 |
 | 6 — README and submission | 0:30 | 0:25 |
 
 The plan front-loaded deployment and provider verification deliberately: the failure mode that

@@ -6,6 +6,8 @@ These docs are written **before** any code, and are updated as the build progres
 They exist so that every decision is deliberate and defensible in the follow-up live
 coding session.
 
+**Live:** https://citeline-henna.vercel.app · **Repo:** https://github.com/Miny320/citeline
+
 ## Index
 
 | Doc | Purpose |
