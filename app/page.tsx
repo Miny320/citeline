@@ -54,6 +54,22 @@ export default async function HomePage() {
         </button>
       </form>
 
+      <p className="mt-6 flex items-start gap-2 rounded-lg bg-surface-muted px-3 py-2 text-[0.75rem] leading-relaxed text-muted">
+        <svg viewBox="0 0 16 16" aria-hidden="true" className="mt-[0.15rem] h-3.5 w-3.5 shrink-0 text-subtle">
+          <path
+            d="M8 7v4M8 5v.5M8 1.5a6.5 6.5 0 100 13 6.5 6.5 0 000-13z"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.4"
+            strokeLinecap="round"
+          />
+        </svg>
+        <span>
+          This demo has no sign-in, so every conversation and uploaded document is visible to
+          anyone with the link. Please use public or sample documents.
+        </span>
+      </p>
+
       <section className="mt-12 border-t border-border pt-6">
         <h2 className="m-0 text-[0.68rem] font-medium tracking-wide text-subtle uppercase">
           Recent conversations

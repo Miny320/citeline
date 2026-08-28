@@ -386,6 +386,11 @@ Stated plainly rather than left as unexplained gaps.
 
 **Known limitations:**
 
+- **No authentication means no privacy boundary.** Authentication was explicitly out of scope,
+  but the consequence is worth stating plainly rather than leaving implied: every conversation
+  and every uploaded document is visible to anyone with the URL, and all conversations are
+  listed on the home page. That is acceptable for a demo and is surfaced in the UI, but it is
+  the first thing that would need building before real use.
 - Scanned/image-only PDFs are rejected with a clear message. No OCR.
 - Files over 4 MB are rejected (Vercel's body limit).
 - No stream resumption: closing the tab mid-answer loses that answer, though everything
