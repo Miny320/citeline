@@ -18,7 +18,8 @@ sections of the final README.
 | 5 — States, hardening, deploy, QA | 0:30 | 0:40 |
 | 6 — README and submission | 0:30 | 0:25 |
 | 7 — UI redesign (requested after review) | — | 0:50 |
-| **Total** | **5:00** | **~6:30** |
+| 8 — Accessibility pass | — | 0:25 |
+| **Total** | **5:00** | **~6:55** |
 
 Over the five-hour box by about forty minutes. Recording the real figure rather than the
 budgeted one. The overrun was mostly Phase 0 and 2: verifying the provider surfaced a dead
@@ -296,7 +297,44 @@ cure is to go and look at the real rendered output.
 
 ---
 
-### C8 — _(next entry)_
+### C8 — The palette I generated failed WCAG contrast, and no test would ever have said so
+
+**What I built:** a set of colour tokens that looked balanced and reasonable — a `--subtle`
+grey for hints, timestamps, footers and placeholder text, sitting between `--muted` and the
+background.
+
+**What it measured at:**
+
+```
+LIGHT   subtle on background   2.73:1   (WCAG AA needs 4.5:1)
+DARK    subtle on background   4.01:1
+```
+
+Roughly a fifth of the text in the interface was below the accessibility threshold, in both
+themes. Nothing in the build could have caught it: colours are strings, so the typechecker,
+the linter and 46 passing tests were all indifferent.
+
+**How it was caught:** by computing relative luminance from the tokens in `globals.css` and
+checking every foreground/background pairing the UI actually renders. Contrast is one of the
+few visual properties that is objectively measurable, so it can be checked rather than judged
+by eye — which matters, because I cannot see the rendered page at all.
+
+**The fix:** solve for the nearest value that clears 4.5:1 against every surface the token
+appears on, keeping the hue. `#9a9a94 → #6e6e68` in light, `#75756f → #8c8c86` in dark. All
+22 pairings now sit above 4.6:1, and `tests/contrast.test.ts` asserts them so a future palette
+tweak cannot silently regress it.
+
+The same pass found there was **no focus-visible style anywhere** — keyboard users had no
+indication of where they were on the page.
+
+**Why it mattered:** this is the third variant of the same lesson. C5 was code that looked
+right and behaved wrong. C7 was code that behaved right and looked wrong. This was code that
+looked *and* behaved right for most people, and was unusable for some. Each one was invisible
+to every automated check in the project until a check was written specifically for it.
+
+---
+
+### C9 — _(next entry)_
 
 ## Cut list (anything not finished, for honest disclosure in the README)
 

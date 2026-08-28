@@ -101,7 +101,7 @@ Then check <http://localhost:3000/api/health>; it should report `ok: true` and
 | `npm run dev` | Development server |
 | `npm run build` | Production build |
 | `npm run check` | Typecheck + lint + tests |
-| `npm test` | Unit tests (46) |
+| `npm test` | Unit tests (76) |
 | `npm run verify:provider` | Model, dimensions, normalisation, similarity |
 | `npm run verify:db` | Schema, index *types*, cascades, JSONB round-trip |
 | `npm run verify:rag` | End-to-end: ingest the fixture, retrieve, assert page attribution |
@@ -282,7 +282,7 @@ Model ids were chosen by measurement, not assumption ([`lib/ai/models.ts`](lib/a
 
 ## Time spent
 
-**About 6 hours 30 minutes** — over the five-hour box, the last fifty minutes being a UI pass after reviewing the deployed app, reported as measured rather than as budgeted. Tracked live in [`docs/05-worklog.md`](docs/05-worklog.md).
+**About 6 hours 55 minutes** — over the five-hour box, the last hour and a quarter being a UI and accessibility pass after reviewing the deployed app, reported as measured rather than as budgeted. Tracked live in [`docs/05-worklog.md`](docs/05-worklog.md).
 
 | Phase | Budget | Actual |
 |---|---|---|
@@ -296,6 +296,7 @@ Model ids were chosen by measurement, not assumption ([`lib/ai/models.ts`](lib/a
 | 5 — States, hardening, deploy, QA | 0:30 | 0:40 |
 | 6 — README and submission | 0:30 | 0:25 |
 | 7 — UI redesign (after reviewing the deployed app) | — | 0:50 |
+| 8 — Accessibility pass | — | 0:25 |
 
 The plan front-loaded deployment and provider verification deliberately: the failure mode that
 ruins these submissions is a polished local app that will not deploy, discovered at hour five.
@@ -318,7 +319,7 @@ dependency was checked against live documentation before being trusted.** `ai`, 
 
 ## Where I corrected or rejected AI output
 
-Seven instances are logged in [`docs/05-worklog.md`](docs/05-worklog.md). The most consequential:
+Eight instances are logged in [`docs/05-worklog.md`](docs/05-worklog.md). The most consequential:
 
 ### Rejected the similarity threshold that every pgvector tutorial uses
 
@@ -343,7 +344,7 @@ symptom would have been "retrieval quality is a bit vague sometimes", which is n
 impossible to trace back to a `where` clause that appears to be doing its job. Catching it
 required running the numbers, not reading the code.
 
-### Three others, briefly
+### Four others, briefly
 
 - **AI SDK v7 route handler.** Generated code used `result.toUIMessageStreamResponse()` — the
   v5 shape. Beyond being wrong, it has no server-side persistence hook, which would have
@@ -362,8 +363,15 @@ required running the numbers, not reading the code.
   by grepping the *deployed* DOM rather than trusting that "the chat works" meant "the chat
   looks right".
 
-Three of the four are the same shape: **code that works on the author's machine and fails on
-someone else's.**
+- **The palette failed WCAG contrast.** `--subtle` — used for hints, timestamps and footers
+  throughout — measured 2.73:1 in light mode against a 4.5:1 requirement. Colours are strings,
+  so nothing in the toolchain could have objected. Found by computing relative luminance for
+  every foreground/background pairing the UI renders; all 22 now clear 4.6:1 and are asserted
+  in tests. The same pass found there was no focus-visible style at all.
+
+The recurring shape is worth naming: **every one of these was invisible to the typechecker,
+the linter and the test suite until a check was written specifically for it.** Three of them
+also fail only on someone else's machine, cold database, or eyes — never on the author's.
 
 ---
 
