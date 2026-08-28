@@ -18,6 +18,23 @@
 export const CHAT_MODEL = 'gemini-3.6-flash';
 
 /**
+ * Models to try, in order, when the one before is rate-limited.
+ *
+ * Google's free tier meters quota **per model** — an exhausted `gemini-3.6-flash` says
+ * "limit: 20, model: gemini-3.6-flash" and says nothing about the others. Falling back to a
+ * lite model therefore keeps a demo answering after the primary quota is spent, which matters
+ * when the reviewer's session is the one that runs into it.
+ *
+ * Only tried when the failure is a rate limit, and only before any tokens have been written,
+ * so a reader never sees an answer restart mid-sentence.
+ */
+export const CHAT_MODEL_CHAIN = [
+  CHAT_MODEL,
+  'gemini-3.5-flash-lite',
+  'gemini-2.5-flash-lite',
+] as const;
+
+/**
  * Embedding model.
  *
  * `gemini-embedding-001` beat `gemini-embedding-2` on both axes that matter here: a larger

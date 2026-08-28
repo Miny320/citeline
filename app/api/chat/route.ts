@@ -1,17 +1,16 @@
-import { google } from '@ai-sdk/google';
 import {
   convertToModelMessages,
   createUIMessageStream,
   createUIMessageStreamResponse,
   generateId,
   stepCountIs,
-  streamText,
   toUIMessageStream,
   type UIMessage,
 } from 'ai';
 import { z } from 'zod';
 
-import { CHAT_MODEL } from '@/lib/ai/models';
+import { CHAT_MODEL_CHAIN } from '@/lib/ai/models';
+import { streamTextWithFallback } from '@/lib/ai/stream-with-fallback';
 import type { ChatMessage } from '@/lib/chat-types';
 import { getChat, listDocuments, saveMessages, setChatTitleIfEmpty } from '@/lib/db/queries';
 import { AppError, errorResponse, toAppError } from '@/lib/errors';
@@ -39,6 +38,19 @@ function lastUserText(messages: UIMessage[]): string {
       .trim();
   }
   return '';
+}
+
+/**
+ * Turn a stream failure into something the user can act on.
+ *
+ * The SDK masks stream errors as "An error occurred." by default — right for not leaking
+ * server internals, wrong for the user, because a rate limit is temporary and the correct
+ * response is simply to wait. Full detail goes to the server log.
+ */
+function describeError(error: unknown): string {
+  const appError = toAppError(error);
+  console.error(`[chat] ${appError.code}:`, appError.message);
+  return appError.userMessage;
 }
 
 export async function POST(request: Request) {
@@ -93,21 +105,13 @@ export async function POST(request: Request) {
     return createUIMessageStreamResponse({
       stream: createUIMessageStream<ChatMessage>({
         originalMessages: messages as ChatMessage[],
-        // The SDK masks stream errors as "An error occurred." by default, which is right for
-        // leaking server internals and wrong for the user: a rate limit is temporary and the
-        // correct action is simply to wait. Map to our taxonomy so the UI can say which it is.
-        onError: (error) => {
-          const appError = toAppError(error);
-          console.error(`[chat] ${appError.code}:`, appError.message);
-          return appError.userMessage;
-        },
-        execute: ({ writer }) => {
+        onError: describeError,
+        execute: async ({ writer }) => {
           // Emit the retrieval set first, so the client can resolve inline [n] markers as
           // soon as the first token arrives rather than waiting for the answer to finish.
           writer.write({ type: 'data-sources', id: 'sources', data: sources });
 
-          const result = streamText({
-            model: google(CHAT_MODEL),
+          const { stream } = await streamTextWithFallback(CHAT_MODEL_CHAIN, {
             system: buildSystemPrompt(retrieved),
             messages: modelMessages,
             tools,
@@ -115,7 +119,9 @@ export async function POST(request: Request) {
             stopWhen: stepCountIs(3),
           });
 
-          writer.merge(toUIMessageStream({ stream: result.stream, tools }));
+          // onError is needed HERE too, not only on the outer stream: the merged stream masks
+          // its own errors first, so the outer handler never sees the real one.
+          writer.merge(toUIMessageStream({ stream, tools, onError: describeError }));
         },
         // Persistence happens on the server. Doing it client-side would lose the reply
         // whenever a stream is interrupted or the tab closes mid-answer — quietly breaking
