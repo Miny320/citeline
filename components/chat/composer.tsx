@@ -130,7 +130,7 @@ export function Composer({
             pickFile(event.dataTransfer.files?.[0]);
           }}
           className={`flex items-end gap-2 rounded-xl border bg-surface p-2 transition-colors ${
-            dragging ? 'border-accent bg-accent-soft/40' : 'border-border focus-within:border-border-strong'
+            dragging ? 'border-accent bg-accent-soft/40' : 'border-border focus-within:border-accent'
           }`}
         >
           <input

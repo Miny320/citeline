@@ -169,6 +169,18 @@ export function Chat({ chatId, chatTitle, chats, initialMessages, initialDocumen
           </div>
         </div>
 
+        {/* Announces progress to screen readers, which otherwise get no signal that an
+            answer is being generated — the streamed text arrives silently. */}
+        <p aria-live="polite" className="sr-only">
+          {status === 'submitted'
+            ? 'Searching the document.'
+            : status === 'streaming'
+              ? 'Generating an answer.'
+              : status === 'error'
+                ? 'Something went wrong generating the answer.'
+                : ''}
+        </p>
+
         <Composer
           onSend={(text) => sendMessage({ text })}
           onUpload={handleUpload}

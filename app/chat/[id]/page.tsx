@@ -8,6 +8,13 @@ import { buildTools } from '@/lib/rag/tools';
 
 export const dynamic = 'force-dynamic';
 
+/** Title the browser tab with the conversation, so several open tabs stay distinguishable. */
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const chat = await getChat(id).catch(() => null);
+  return { title: chat?.title ?? 'Conversation' };
+}
+
 export default async function ChatPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
