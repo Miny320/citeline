@@ -9,9 +9,6 @@ filename, the page or section, and the verbatim excerpt it came from.
 **Live URL:** https://citeline-henna.vercel.app
 **Repository:** https://github.com/Miny320/citeline
 
-Planning and design documents live in [`docs/`](docs/) — requirements, architecture, the full
-decision log, and a worklog written as the build happened.
-
 ---
 
 ## Contents
@@ -212,7 +209,7 @@ upserts rather than duplicating.
 
 ## Key trade-offs
 
-Full log with rejected alternatives in [`docs/04-decisions.md`](docs/04-decisions.md).
+Each one states what was rejected as well as what was chosen.
 
 ### 1. No absolute similarity threshold — rank-based fusion only
 
@@ -282,7 +279,7 @@ Model ids were chosen by measurement, not assumption ([`lib/ai/models.ts`](lib/a
 
 ## Time spent
 
-**About 6 hours 55 minutes** — over the five-hour box, the last hour and a quarter being a UI and accessibility pass after reviewing the deployed app, reported as measured rather than as budgeted. Tracked live in [`docs/05-worklog.md`](docs/05-worklog.md).
+**About 6 hours 55 minutes** — over the five-hour box, the last hour and a quarter being a UI and accessibility pass after reviewing the deployed app, reported as measured rather than as budgeted, and tracked as the build happened rather than reconstructed afterwards.
 
 | Phase | Budget | Actual |
 |---|---|---|
@@ -319,7 +316,7 @@ dependency was checked against live documentation before being trusted.** `ai`, 
 
 ## Where I corrected or rejected AI output
 
-Eight instances are logged in [`docs/05-worklog.md`](docs/05-worklog.md). The most consequential:
+Eight instances were logged during the build. The most consequential:
 
 ### Rejected the similarity threshold that every pgvector tutorial uses
 
