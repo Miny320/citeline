@@ -17,7 +17,8 @@ sections of the final README.
 | 4 — Citations and evidence cards | 0:45 | 0:40 |
 | 5 — States, hardening, deploy, QA | 0:30 | 0:40 |
 | 6 — README and submission | 0:30 | 0:25 |
-| **Total** | **5:00** | **~5:40** |
+| 7 — UI redesign (requested after review) | — | 0:50 |
+| **Total** | **5:00** | **~6:30** |
 
 Over the five-hour box by about forty minutes. Recording the real figure rather than the
 budgeted one. The overrun was mostly Phase 0 and 2: verifying the provider surfaced a dead
@@ -257,7 +258,45 @@ only appeared under a test that used the code *twice*.
 
 ---
 
-### C7 — _(next entry)_
+### C7 — The renderer I generated handled text and citations, but not markdown
+
+**What I built:** a message renderer that split assistant text on `[n]` markers and rendered
+citation chips. It typechecked, it passed its tests, and it looked correct in review.
+
+**What was actually on screen**, read out of the deployed page's DOM:
+
+```
+`ERR_2043` indicates that the uploaded file exceeded the maximum permitted size
+Enterprise customers may request a full refund within **45 days** of the invoice date
+```
+
+Gemini emits markdown. Nothing in the pipeline rendered it, so users saw literal backticks
+and asterisks in every answer.
+
+**Why it was missed:** the tests asserted that citations resolved to the right chunks — which
+they did. Nothing asserted anything about *how the answer reads*. The unit tests, the
+typechecker and the linter were all satisfied by output that was visibly wrong to any human
+who opened the page.
+
+**How it was caught:** by fetching the deployed page and grepping the rendered DOM for
+markdown syntax, rather than trusting that "the chat works" meant "the chat looks right".
+
+**The fix:** a small purpose-written markdown renderer. A general library was the obvious
+choice and was rejected: `[n]` markers must interleave with inline formatting *and* become
+interactive components, while `[label](url)` links must still work. Every library would either
+escape the markers or force a second parse over its output to find them. 15 tests now cover
+both halves — including that a link is never mistaken for a citation, and that an unmatched
+marker stays plain text rather than becoming a dead chip.
+
+**Why it mattered:** this is the same failure mode as C5, from the other direction. C5 was
+code that looked right and behaved wrong; this was code that behaved right and *looked*
+wrong. Both were invisible to every automated check in the project. The general lesson is that
+"tests pass" and "typecheck clean" say nothing about what a user actually sees, and the only
+cure is to go and look at the real rendered output.
+
+---
+
+### C8 — _(next entry)_
 
 ## Cut list (anything not finished, for honest disclosure in the README)
 

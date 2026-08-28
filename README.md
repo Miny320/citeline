@@ -101,7 +101,7 @@ Then check <http://localhost:3000/api/health>; it should report `ok: true` and
 | `npm run dev` | Development server |
 | `npm run build` | Production build |
 | `npm run check` | Typecheck + lint + tests |
-| `npm test` | Unit tests (31) |
+| `npm test` | Unit tests (46) |
 | `npm run verify:provider` | Model, dimensions, normalisation, similarity |
 | `npm run verify:db` | Schema, index *types*, cascades, JSONB round-trip |
 | `npm run verify:rag` | End-to-end: ingest the fixture, retrieve, assert page attribution |
@@ -282,7 +282,7 @@ Model ids were chosen by measurement, not assumption ([`lib/ai/models.ts`](lib/a
 
 ## Time spent
 
-**About 5 hours 40 minutes** — over the box by roughly forty minutes, reported as measured rather than as budgeted. Tracked live in [`docs/05-worklog.md`](docs/05-worklog.md).
+**About 6 hours 30 minutes** — over the five-hour box, the last fifty minutes being a UI pass after reviewing the deployed app, reported as measured rather than as budgeted. Tracked live in [`docs/05-worklog.md`](docs/05-worklog.md).
 
 | Phase | Budget | Actual |
 |---|---|---|
@@ -295,6 +295,7 @@ Model ids were chosen by measurement, not assumption ([`lib/ai/models.ts`](lib/a
 | 4 — Citations and evidence cards | 0:45 | 0:40 |
 | 5 — States, hardening, deploy, QA | 0:30 | 0:40 |
 | 6 — README and submission | 0:30 | 0:25 |
+| 7 — UI redesign (after reviewing the deployed app) | — | 0:50 |
 
 The plan front-loaded deployment and provider verification deliberately: the failure mode that
 ruins these submissions is a polished local app that will not deploy, discovered at hour five.
@@ -317,7 +318,7 @@ dependency was checked against live documentation before being trusted.** `ai`, 
 
 ## Where I corrected or rejected AI output
 
-Six instances are logged in [`docs/05-worklog.md`](docs/05-worklog.md). The most consequential:
+Seven instances are logged in [`docs/05-worklog.md`](docs/05-worklog.md). The most consequential:
 
 ### Rejected the similarity threshold that every pgvector tutorial uses
 
@@ -355,6 +356,11 @@ required running the numbers, not reading the code.
 - **`drizzle-kit generate` omits `CREATE EXTENSION vector`.** The migration fails on any cold
   database, but passes for anyone whose local database already has the extension — so it would
   have broken on the reviewer's machine, not mine.
+- **The message renderer handled citations but not markdown.** Gemini emits markdown; nothing
+  rendered it, so every answer showed literal backticks and asterisks. Typecheck, lint and 31
+  tests were all green on output that was visibly wrong to anyone who opened the page. Caught
+  by grepping the *deployed* DOM rather than trusting that "the chat works" meant "the chat
+  looks right".
 
 Three of the four are the same shape: **code that works on the author's machine and fails on
 someone else's.**
