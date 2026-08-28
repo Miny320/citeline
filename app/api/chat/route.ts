@@ -14,7 +14,7 @@ import { z } from 'zod';
 import { CHAT_MODEL } from '@/lib/ai/models';
 import type { ChatMessage } from '@/lib/chat-types';
 import { getChat, listDocuments, saveMessages, setChatTitleIfEmpty } from '@/lib/db/queries';
-import { AppError, errorResponse } from '@/lib/errors';
+import { AppError, errorResponse, toAppError } from '@/lib/errors';
 import { buildNoResultsReply, buildSystemPrompt } from '@/lib/rag/prompt';
 import { retrieve } from '@/lib/rag/retrieve';
 import { buildSources, buildTools } from '@/lib/rag/tools';
@@ -93,6 +93,14 @@ export async function POST(request: Request) {
     return createUIMessageStreamResponse({
       stream: createUIMessageStream<ChatMessage>({
         originalMessages: messages as ChatMessage[],
+        // The SDK masks stream errors as "An error occurred." by default, which is right for
+        // leaking server internals and wrong for the user: a rate limit is temporary and the
+        // correct action is simply to wait. Map to our taxonomy so the UI can say which it is.
+        onError: (error) => {
+          const appError = toAppError(error);
+          console.error(`[chat] ${appError.code}:`, appError.message);
+          return appError.userMessage;
+        },
         execute: ({ writer }) => {
           // Emit the retrieval set first, so the client can resolve inline [n] markers as
           // soon as the first token arrives rather than waiting for the answer to finish.

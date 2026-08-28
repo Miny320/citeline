@@ -28,7 +28,7 @@ export function Chat({ chatId, chatTitle, chats, initialMessages, initialDocumen
   const scrollRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  const { messages, sendMessage, status, error, clearError, stop } = useChat<ChatMessage>({
+  const { messages, sendMessage, status, error, clearError, stop, regenerate } = useChat<ChatMessage>({
     id: chatId,
     messages: initialMessages,
     transport: new DefaultChatTransport({ api: '/api/chat', body: { chatId } }),
@@ -152,16 +152,35 @@ export function Chat({ chatId, chatTitle, chats, initialMessages, initialDocumen
             {error ? (
               <div
                 role="alert"
-                className="rounded-lg bg-danger-soft px-3 py-2.5 text-[0.82rem] text-danger"
+                className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-lg bg-danger-soft px-3 py-2.5 text-[0.82rem] text-danger"
               >
-                Something went wrong generating that answer.{' '}
-                <button
-                  type="button"
-                  onClick={clearError}
-                  className="underline underline-offset-2 hover:no-underline"
-                >
-                  Dismiss
-                </button>
+                {/* The server maps provider failures to a specific message — a rate limit is
+                    temporary and the right action is to wait, which "something went wrong"
+                    fails to communicate. */}
+                <span className="flex-1">
+                  {error.message && error.message !== 'An error occurred.'
+                    ? error.message
+                    : 'Something went wrong generating that answer.'}
+                </span>
+                <span className="flex shrink-0 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      clearError();
+                      void regenerate();
+                    }}
+                    className="font-medium underline underline-offset-2 hover:no-underline"
+                  >
+                    Try again
+                  </button>
+                  <button
+                    type="button"
+                    onClick={clearError}
+                    className="underline underline-offset-2 hover:no-underline"
+                  >
+                    Dismiss
+                  </button>
+                </span>
               </div>
             ) : null}
 
