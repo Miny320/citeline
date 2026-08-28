@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
+import { useLayoutEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
 
 import { ACCEPT_ATTRIBUTE, MAX_UPLOAD_BYTES, formatBytes } from '@/lib/upload';
 
@@ -13,23 +13,45 @@ export interface UploadState {
 interface ComposerProps {
   onSend: (text: string) => void;
   onUpload: (file: File) => void;
+  onStop: () => void;
   disabled: boolean;
   busy: boolean;
   upload: UploadState;
   hasDocument: boolean;
 }
 
+const MAX_TEXTAREA_PX = 200;
+
 /**
  * The message input, with file upload attached.
  *
- * Upload lives in the composer rather than on a separate screen because the brief asks for
- * it "from inside the conversation" — attaching a document is part of the conversation, not
- * a detour out of it.
+ * Upload lives in the composer rather than on a separate screen because the brief asks for it
+ * "from inside the conversation" — attaching a document is part of the conversation, not a
+ * detour out of it.
  */
-export function Composer({ onSend, onUpload, disabled, busy, upload, hasDocument }: ComposerProps) {
+export function Composer({
+  onSend,
+  onUpload,
+  onStop,
+  disabled,
+  busy,
+  upload,
+  hasDocument,
+}: ComposerProps) {
   const [value, setValue] = useState('');
   const [sizeError, setSizeError] = useState<string | null>(null);
+  const [dragging, setDragging] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Grow with the content up to a cap, then scroll. Measured from scrollHeight after a reset,
+  // because scrollHeight never shrinks on its own.
+  useLayoutEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${Math.min(el.scrollHeight, MAX_TEXTAREA_PX)}px`;
+  }, [value]);
 
   const submit = (event?: FormEvent) => {
     event?.preventDefault();
@@ -51,9 +73,9 @@ export function Composer({ onSend, onUpload, disabled, busy, upload, hasDocument
     if (!file) return;
     setSizeError(null);
 
-    // Check the size before uploading: the server enforces the same limit, but sending 40 MB
-    // just to be told no is a poor use of the user's connection. Vercel would also reject the
-    // body with an opaque 413 before our handler ever ran.
+    // Check size before uploading. The server enforces the same limit, but sending 40 MB just
+    // to be refused wastes the user's connection — and Vercel would reject the body with an
+    // opaque 413 before our handler ever ran.
     if (file.size > MAX_UPLOAD_BYTES) {
       setSizeError(
         `${file.name} is ${formatBytes(file.size)}. The limit is ${formatBytes(MAX_UPLOAD_BYTES)}.`,
@@ -67,25 +89,50 @@ export function Composer({ onSend, onUpload, disabled, busy, upload, hasDocument
   const notice = sizeError ?? (upload.status === 'failed' ? upload.error : null);
 
   return (
-    <div className="border-t border-border bg-surface/80 backdrop-blur">
-      <div className="mx-auto w-full max-w-3xl px-4 py-3">
+    <div className="shrink-0 border-t border-border bg-background px-4 pt-3 pb-4">
+      <div className="mx-auto w-full max-w-[46rem]">
         {notice ? (
           <p
             role="alert"
-            className="mb-2 rounded-md bg-danger-soft px-3 py-2 text-[0.8rem] text-danger"
+            className="mb-2 flex items-start gap-2 rounded-lg bg-danger-soft px-3 py-2 text-[0.78rem] text-danger"
           >
+            <svg viewBox="0 0 16 16" aria-hidden="true" className="mt-0.5 h-3.5 w-3.5 shrink-0">
+              <path
+                d="M8 5v4M8 11v.5M8 1.5L1 14h14L8 1.5z"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.4"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
             {notice}
           </p>
         ) : null}
 
         {upload.status === 'uploading' ? (
-          <p className="mb-2 flex items-center gap-2 rounded-md bg-surface-muted px-3 py-2 text-[0.8rem] text-muted">
+          <p className="mb-2 flex items-center gap-2 rounded-lg bg-surface-muted px-3 py-2 text-[0.78rem] text-muted">
             <span className="h-1.5 w-1.5 shrink-0 animate-pulse-soft rounded-full bg-accent" />
-            Reading {upload.filename}… extracting text, splitting it and building embeddings.
+            Reading {upload.filename} — extracting text, splitting it and building embeddings.
           </p>
         ) : null}
 
-        <form onSubmit={submit} className="flex items-end gap-2">
+        <form
+          onSubmit={submit}
+          onDragOver={(event) => {
+            event.preventDefault();
+            setDragging(true);
+          }}
+          onDragLeave={() => setDragging(false)}
+          onDrop={(event) => {
+            event.preventDefault();
+            setDragging(false);
+            pickFile(event.dataTransfer.files?.[0]);
+          }}
+          className={`flex items-end gap-2 rounded-xl border bg-surface p-2 transition-colors ${
+            dragging ? 'border-accent bg-accent-soft/40' : 'border-border focus-within:border-border-strong'
+          }`}
+        >
           <input
             ref={fileRef}
             type="file"
@@ -104,7 +151,7 @@ export function Composer({ onSend, onUpload, disabled, busy, upload, hasDocument
             disabled={upload.status === 'uploading'}
             title="Attach a PDF, TXT or Markdown file"
             aria-label="Attach a document"
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border text-muted transition-colors hover:border-border-strong hover:text-foreground disabled:opacity-50"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-subtle transition-colors hover:bg-surface-muted hover:text-foreground disabled:opacity-40"
           >
             <svg viewBox="0 0 20 20" aria-hidden="true" className="h-4 w-4">
               <path
@@ -119,27 +166,56 @@ export function Composer({ onSend, onUpload, disabled, busy, upload, hasDocument
           </button>
 
           <textarea
+            ref={textareaRef}
             value={value}
             onChange={(event) => setValue(event.target.value)}
             onKeyDown={onKeyDown}
             rows={1}
             placeholder={
-              hasDocument ? 'Ask about the document…' : 'Attach a document to get started…'
+              dragging
+                ? 'Drop the file to attach it…'
+                : hasDocument
+                  ? 'Ask about the document…'
+                  : 'Attach a document, then ask about it…'
             }
-            className="max-h-40 min-h-9 flex-1 resize-none rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground placeholder:text-subtle focus:border-border-strong focus:outline-none"
+            className="flex-1 resize-none self-center bg-transparent px-1 py-1.5 text-[0.88rem] leading-relaxed text-foreground placeholder:text-subtle focus:outline-none"
           />
 
-          <button
-            type="submit"
-            disabled={disabled || value.trim().length === 0}
-            className="flex h-9 shrink-0 items-center rounded-lg bg-accent px-3.5 text-sm font-medium text-accent-foreground transition-opacity hover:opacity-90 disabled:opacity-40"
-          >
-            {busy ? 'Thinking…' : 'Send'}
-          </button>
+          {busy ? (
+            <button
+              type="button"
+              onClick={onStop}
+              aria-label="Stop generating"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-surface-muted text-foreground transition-colors hover:bg-border"
+            >
+              <svg viewBox="0 0 16 16" aria-hidden="true" className="h-3 w-3">
+                <rect x="3" y="3" width="10" height="10" rx="1.5" fill="currentColor" />
+              </svg>
+            </button>
+          ) : (
+            <button
+              type="submit"
+              disabled={disabled || value.trim().length === 0}
+              aria-label="Send message"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent text-accent-foreground transition-opacity hover:opacity-90 disabled:opacity-30"
+            >
+              <svg viewBox="0 0 16 16" aria-hidden="true" className="h-3.5 w-3.5">
+                <path
+                  d="M8 13V3M4 7l4-4 4 4"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </button>
+          )}
         </form>
 
-        <p className="mt-1.5 text-[0.7rem] text-subtle">
-          PDF, TXT or Markdown · up to {formatBytes(MAX_UPLOAD_BYTES)}
+        <p className="mt-1.5 text-center text-[0.68rem] text-subtle">
+          PDF, TXT or Markdown · up to {formatBytes(MAX_UPLOAD_BYTES)} · answers cite the page
+          they came from
         </p>
       </div>
     </div>

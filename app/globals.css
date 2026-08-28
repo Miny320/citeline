@@ -77,25 +77,8 @@ body {
 .animate-pulse-soft {
   animation: pulse-soft 1.6s ease-in-out infinite;
 }
-
-@keyframes caret-blink {
-  0%, 45% { opacity: 1; }
-  50%, 95% { opacity: 0.2; }
-}
-.streaming-caret::after {
-  content: "";
-  display: inline-block;
-  width: 0.45rem;
-  height: 1.05em;
-  margin-left: 0.15rem;
-  vertical-align: text-bottom;
-  background: var(--accent);
-  animation: caret-blink 1s steps(1) infinite;
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .animate-pulse-soft,
-  .streaming-caret::after {
+  .animate-pulse-soft {
     animation: none;
   }
 }
