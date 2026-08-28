@@ -101,7 +101,7 @@ Then check <http://localhost:3000/api/health>; it should report `ok: true` and
 | `npm run dev` | Development server |
 | `npm run build` | Production build |
 | `npm run check` | Typecheck + lint + tests |
-| `npm test` | Unit tests (76) |
+| `npm test` | Unit tests (87) |
 | `npm run verify:provider` | Model, dimensions, normalisation, similarity |
 | `npm run verify:db` | Schema, index *types*, cascades, JSONB round-trip |
 | `npm run verify:rag` | End-to-end: ingest the fixture, retrieve, assert page attribution |
@@ -399,13 +399,18 @@ Stated plainly rather than left as unexplained gaps.
   and every uploaded document is visible to anyone with the URL, and all conversations are
   listed on the home page. That is acceptable for a demo and is surfaced in the UI, but it is
   the first thing that would need building before real use.
-- **Gemini's free tier is rate-limited to 20 requests for `gemini-3.6-flash`.** Sustained
+- **Gemini's free tier is rate-limited to 20 requests for `gemini-3.6-flash`.** Quota is
+  metered per model, so the app falls back through a chain of models when one is exhausted
+  (`lib/ai/stream-with-fallback.ts`). The switch happens before any token is sent, so an
+  answer never restarts mid-sentence, and only rate limits trigger it — a bad key would fail
+  identically on every model. Sustained
   use will hit it, and the API asks for a short wait before retrying. The app detects this
   specifically and says *"The AI service is busy right now. Wait a moment and try again."*
-  with a **Try again** button, rather than a generic failure — a rate limit is temporary and
-  the correct action is simply to wait. Retrieval still runs and its sources still stream, so
-  only the generated answer is affected. Discovered by exhausting the quota during QA; the
-  real cause was read out of the Vercel runtime logs.
+  If every model in the chain is exhausted, the UI says *"The AI service is busy right now.
+  Wait a moment and try again."* with a **Try again** button, rather than a generic failure.
+  Retrieval still runs and its sources still stream, so only the generated answer is affected.
+  Discovered by exhausting the quota during QA; the real cause was read out of the Vercel
+  runtime logs.
 - Scanned/image-only PDFs are rejected with a clear message. No OCR.
 - Files over 4 MB are rejected (Vercel's body limit).
 - No stream resumption: closing the tab mid-answer loses that answer, though everything
