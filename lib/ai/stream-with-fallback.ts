@@ -43,22 +43,39 @@ export async function streamTextWithFallback<TOOLS extends ToolSet>(
     const reader = result.stream.getReader();
 
     try {
-      const first = await reader.read();
+      // The stream opens with bookkeeping parts before the provider is really committed --
+      // a failed request still emits `start` first, and the error only arrives after it.
+      // Probing just the first chunk would therefore commit to a model that is about to
+      // fail, so read through the prelude until real content or an error appears.
+      const prelude: TextStreamPart<TOOLS>[] = [];
+      let finished = false;
 
-      // Some failures arrive as an error *part* rather than a rejected read.
-      if (!first.done && first.value.type === 'error') {
-        throw first.value.error ?? new Error('stream error part');
+      for (;;) {
+        const chunk = await reader.read();
+
+        if (chunk.done) {
+          finished = true;
+          break;
+        }
+
+        // Failures arrive as an error *part* rather than a rejected read.
+        if (chunk.value.type === 'error') {
+          throw chunk.value.error ?? new Error('stream error part');
+        }
+
+        prelude.push(chunk.value);
+        if (chunk.value.type !== 'start' && chunk.value.type !== 'start-step') break;
       }
 
       if (index > 0) console.warn(`[chat] primary rate-limited; answered with ${model}`);
 
-      // Re-attach the chunk we consumed, then pass the rest through untouched.
+      // Replay what we consumed, then pass the rest through untouched.
       return {
         model,
         stream: new ReadableStream<TextStreamPart<TOOLS>>({
           start(controller) {
-            if (first.done) controller.close();
-            else controller.enqueue(first.value);
+            for (const part of prelude) controller.enqueue(part);
+            if (finished) controller.close();
           },
           async pull(controller) {
             try {
